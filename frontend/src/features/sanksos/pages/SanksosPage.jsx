@@ -2,9 +2,32 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { IconInbox, IconCheck, IconAlertCircle } from "@tabler/icons-react";
 import { toArray, hasOpenSanksos } from "../../../helpers/dataHelper";
+import { showImageDialog, showErrorDialog } from "../../../helpers/toolsHelper";
 import BadgeComponent from "../../karma/components/BadgeComponent";
 import { asyncFetchSanksos, asyncAksiSanksos, asyncAjukanSanksos } from "../states/action";
 import { asyncFetchDemerit } from "../../demerit/states/action";
+
+const MAKS_UKURAN_MB = 5;
+
+// Tampilkan lampiran: gambar -> thumbnail (klik untuk perbesar), file lain -> link unduh
+function LampiranComponent({ src, label }) {
+  if (!src) return null;
+  const isImage = src.startsWith("data:image");
+  return (
+    <div className="mt-2">
+      <p className="text-xs text-slate-500 mb-1">{label}:</p>
+      {isImage ? (
+        <button type="button" onClick={() => showImageDialog(src, label)} title="Klik untuk memperbesar">
+          <img src={src} alt={label} className="w-24 h-24 rounded-lg object-cover border border-slate-300 hover:opacity-80" />
+        </button>
+      ) : (
+        <a href={src} download="bukti-sanksos" className="text-sm font-semibold text-sky-700 underline">
+          Unduh / lihat file
+        </a>
+      )}
+    </div>
+  );
+}
 
 export default function SanksosPage() {
   const dispatch = useDispatch();
@@ -16,11 +39,11 @@ export default function SanksosPage() {
 
   const [tugas, setTugas] = useState({});
   const [poinVerif, setPoinVerif] = useState({});
+  const [buktiKerja, setBuktiKerja] = useState({}); // { [sanksosId]: { data, nama } }
 
   // Form request sanksos mahasiswa
   const [selectedDemeritId, setSelectedDemeritId] = useState("");
   const [catatanMahasiswa, setCatatanMahasiswa] = useState("");
-  const [fotoBukti, setFotoBukti] = useState("");
 
   const isPembina = role === "pembina";
 
@@ -41,30 +64,40 @@ export default function SanksosPage() {
     }
   }, [demeritBisaDiajukan, selectedDemeritId]);
 
-  function handleFotoBuktiChange(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFotoBukti(reader.result);
-    };
-    reader.readAsDataURL(file);
-  }
-
   async function handleAjukanSanksos(event) {
     event.preventDefault();
     if (!selectedDemeritId) return;
     const success = await dispatch(
-      asyncAjukanSanksos(Number(selectedDemeritId), catatanMahasiswa, fotoBukti)
+      asyncAjukanSanksos(Number(selectedDemeritId), catatanMahasiswa)
     );
     if (success) {
       setCatatanMahasiswa("");
-      setFotoBukti("");
       setSelectedDemeritId("");
     }
   }
 
+  function handleBuktiKerjaChange(id, event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAKS_UKURAN_MB * 1024 * 1024) {
+      showErrorDialog(`Ukuran file maksimal ${MAKS_UKURAN_MB} MB.`);
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBuktiKerja((prev) => ({ ...prev, [id]: { data: reader.result, nama: file.name } }));
+    };
+    reader.readAsDataURL(file);
+  }
+
   function handleAksi(id, aksi) {
+    if (aksi === "dikerjakan") {
+      if (!buktiKerja[id]?.data) {
+        return showErrorDialog("Upload foto / file bukti pengerjaan dulu sebelum menandai selesai dikerjakan.");
+      }
+      return dispatch(asyncAksiSanksos(id, "dikerjakan", buktiKerja[id].data));
+    }
     if (aksi === "setujui") {
       return dispatch(asyncAksiSanksos(id, "setujui", tugas[id]));
     }
@@ -126,38 +159,6 @@ export default function SanksosPage() {
                   className="input-base"
                   placeholder="mis. Saya bersedia membersihkan lorong asrama atau ruang komunal..."
                 />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="sanksos-foto-input"
-                  className="block text-sm font-semibold text-slate-700 mb-1.5"
-                >
-                  Lampiran Foto / Bukti Awal (Opsional)
-                </label>
-                <input
-                  id="sanksos-foto-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFotoBuktiChange}
-                  className="input-base max-w-md"
-                />
-                {fotoBukti && (
-                  <div className="mt-2 flex items-center gap-3">
-                    <img
-                      src={fotoBukti}
-                      alt="Pratinjau lampiran"
-                      className="w-16 h-16 rounded-lg object-cover border border-slate-300"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFotoBukti("")}
-                      className="text-xs text-rose-600 hover:underline"
-                    >
-                      Hapus lampiran
-                    </button>
-                  </div>
-                )}
               </div>
 
               <button
@@ -228,16 +229,8 @@ export default function SanksosPage() {
                     Tugas: <b>{item.tugas}</b>
                   </p>
                 )}
-                {item.bukti_foto && (
-                  <div className="mt-2">
-                    <p className="text-xs text-slate-500 mb-1">Foto Bukti:</p>
-                    <img
-                      src={item.bukti_foto}
-                      alt="Foto bukti sanksos"
-                      className="w-20 h-20 rounded-lg object-cover border border-slate-300"
-                    />
-                  </div>
-                )}
+                <LampiranComponent src={item.bukti_foto} label="Lampiran awal" />
+                <LampiranComponent src={item.bukti_selesai} label="Bukti pengerjaan" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:min-w-64">
@@ -290,15 +283,36 @@ export default function SanksosPage() {
                     </button>
                   </div>
                 )}
-                {!isPembina && item.status === "disetujui" && (
-                  <button
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => handleAksi(item.id, "dikerjakan")}
-                    className="btn-primary"
-                  >
-                    Tandai sudah dikerjakan
-                  </button>
+                {!isPembina && (item.status === "disetujui" || (item.status === "dikerjakan" && !item.bukti_selesai)) && (
+                  <div className="w-full space-y-2">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Upload foto / file bukti pengerjaan (wajib)
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => handleBuktiKerjaChange(item.id, e)}
+                        className="input-base mt-1"
+                      />
+                    </label>
+                    {buktiKerja[item.id]?.data?.startsWith("data:image") && (
+                      <img
+                        src={buktiKerja[item.id].data}
+                        alt="Pratinjau bukti pengerjaan"
+                        className="w-20 h-20 rounded-lg object-cover border border-slate-300"
+                      />
+                    )}
+                    {buktiKerja[item.id] && !buktiKerja[item.id].data.startsWith("data:image") && (
+                      <p className="text-xs text-slate-600">File: {buktiKerja[item.id].nama}</p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleAksi(item.id, "dikerjakan")}
+                      className="btn-primary"
+                    >
+                      {item.status === "disetujui" ? "Tandai sudah dikerjakan" : "Kirim bukti pengerjaan"}
+                    </button>
+                  </div>
                 )}
               </div>
             </li>
