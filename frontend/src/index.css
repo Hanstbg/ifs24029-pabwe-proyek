@@ -4,11 +4,22 @@
   --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --color-kuning: #f5c518;
   --color-merah: #d92d20;
-  --animate-pop: pop 0.25s ease-out both;
+  --color-tinta: #14213d;
+  --color-tinta-2: #1f2f52;
+  --color-kertas: #eef1f6;
+  --animate-pop: pop 0.2s ease-out both;
 
   @keyframes pop {
-    from { opacity: 0; transform: scale(0.96); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes kartu-kiri {
+    from { opacity: 0; transform: rotate(-24deg) translateY(10px); }
+    to { opacity: 1; transform: rotate(-10deg) translateY(0); }
+  }
+  @keyframes kartu-kanan {
+    from { opacity: 0; transform: rotate(24deg) translateY(10px); }
+    to { opacity: 1; transform: rotate(10deg) translateY(0); }
   }
 }
 
@@ -16,56 +27,97 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-sans);
-  color: #0f172a;
-  background:
-    radial-gradient(900px 400px at 100% -10%, rgba(245, 197, 24, 0.12), transparent 60%),
-    radial-gradient(700px 360px at -10% 110%, rgba(217, 45, 32, 0.07), transparent 60%),
-    #f8fafc;
-  background-attachment: fixed;
+  color: #14213d;
+  background: var(--color-kertas);
+  line-height: 1.55;
 }
 
 ::selection { background: #fde68a; }
 
-.input-base {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.875rem;
-  transition: box-shadow 0.15s, border-color 0.15s;
-}
-.input-base:focus {
-  outline: none;
-  border-color: #334155;
-  box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.15);
+@layer base {
+  main h1 {
+    font-size: 1.625rem;
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--color-tinta);
+  }
+  main h2 {
+    letter-spacing: -0.01em;
+    color: var(--color-tinta);
+  }
 }
 
+:focus-visible {
+  outline: 3px solid rgba(245, 197, 24, 0.9);
+  outline-offset: 2px;
+}
+
+/* ---------- Form ---------- */
+.input-base {
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  color: var(--color-tinta);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input-base::placeholder { color: #64748b; }
+.input-base:hover { border-color: #94a3b8; }
+.input-base:focus {
+  outline: none;
+  border-color: var(--color-tinta);
+  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.55);
+}
+
+/* ---------- Tombol ---------- */
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #1e293b, #334155);
-  color: #fff; font-weight: 600; font-size: 0.875rem;
+  border-radius: 0.625rem;
+  background: var(--color-tinta);
+  color: #fff; font-weight: 700; font-size: 0.875rem;
   padding: 0.6rem 1.1rem;
-  box-shadow: 0 8px 20px -8px rgba(30, 41, 59, 0.7);
-  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  border: 1px solid var(--color-tinta);
+  transition: background 0.15s, transform 0.1s;
 }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 24px -8px rgba(30, 41, 59, 0.8); }
+.btn-primary:hover { background: var(--color-tinta-2); }
+.btn-primary:active { transform: translateY(1px); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .btn-ghost {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-  border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff;
-  color: #334155; font-weight: 600; font-size: 0.875rem; padding: 0.6rem 1.1rem;
-  transition: background 0.15s;
+  border-radius: 0.625rem; border: 1px solid #cbd5e1; background: #fff;
+  color: var(--color-tinta); font-weight: 700; font-size: 0.875rem; padding: 0.6rem 1.1rem;
+  transition: background 0.15s, border-color 0.15s;
 }
-.btn-ghost:hover { background: #f8fafc; }
+.btn-ghost:hover { background: #f1f5f9; border-color: #94a3b8; }
 .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ---------- Kartu konten ---------- */
 .card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(6px);
-  border: 1px solid #e2e8f0;
-  border-radius: 1.25rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -16px rgba(15, 23, 42, 0.12);
+  background: #fff;
+  border: 1px solid #dbe1ea;
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 2px rgba(20, 33, 61, 0.05);
+}
+.card ul.divide-y > li { padding-left: 0.25rem; padding-right: 0.25rem; }
+.card ul.divide-y > li:hover { background: #f8fafc; }
+
+/* Garis status di sisi kiri kartu */
+.tepi-kuning { border-left: 4px solid var(--color-kuning); }
+.tepi-merah { border-left: 4px solid var(--color-merah); }
+.tepi-tinta { border-left: 4px solid var(--color-tinta); }
+.tepi-biru { border-left: 4px solid #0284c7; }
+
+.angka { font-variant-numeric: tabular-nums; }
+
+/* Dua kartu (kuning + merah) dari logo */
+.kartu-kiri { animation: kartu-kiri 0.5s 0.05s cubic-bezier(.2,.7,.3,1) both; transform: rotate(-10deg); }
+.kartu-kanan { animation: kartu-kanan 0.5s 0.15s cubic-bezier(.2,.7,.3,1) both; transform: rotate(10deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .kartu-kiri, .kartu-kanan, .animate-pop { animation: none; }
 }

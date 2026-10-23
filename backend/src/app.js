@@ -239,7 +239,10 @@ app.patch('/api/sanksos/:id', wajibLogin, (req, res) => {
   } else if (aksi === 'dikerjakan' && s.user_id === req.user.id) {
     // Boleh dari 'disetujui' (tandai selesai dikerjakan) atau 'dikerjakan' (melengkapi bukti yang belum ada)
     if (!['disetujui', 'dikerjakan'].includes(s.status)) return salah('Tugas belum disetujui');
-    if (!bukti_selesai) return salah('Foto / file bukti pengerjaan wajib diupload');
+    // Kalau sudah dikerjakan dan buktinya sudah ada, tidak boleh ditimpa lagi
+    if (s.status === 'dikerjakan' && s.bukti_selesai) return salah('Bukti pengerjaan sudah dikirim');
+    if (typeof bukti_selesai !== 'string' || !bukti_selesai.startsWith('data:'))
+      return salah('Foto / file bukti pengerjaan wajib diupload');
     // Bukti pengerjaan disimpan di kolom terpisah agar lampiran awal tidak tertimpa
     db.prepare(`UPDATE sanksos SET status = 'dikerjakan', bukti_selesai = ? WHERE id = ?`)
       .run(bukti_selesai, s.id);
@@ -247,3 +250,5 @@ app.patch('/api/sanksos/:id', wajibLogin, (req, res) => {
   }
   res.status(400).json({ error: 'Aksi tidak valid' });
 });
+
+module.exports = app;

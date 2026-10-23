@@ -19,7 +19,7 @@ export default function NavbarComponent({ onMenuClick }) {
   }
 
   return (
-    <header className="sticky top-0 z-10 h-16 bg-white/80 backdrop-blur border-b border-slate-200 flex items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-10 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -29,8 +29,8 @@ export default function NavbarComponent({ onMenuClick }) {
         >
           <IconMenu2 size={22} />
         </button>
-        <span className="font-extrabold text-slate-900 tracking-[0.18em] lg:hidden">KARMA</span>
-        <span className="hidden lg:inline text-sm text-slate-600">Kartu Asrama Mahasiswa</span>
+        <span className="font-extrabold text-tinta tracking-[0.18em] lg:hidden">KARMA</span>
+        <span className="hidden lg:inline text-sm font-medium text-slate-600">Kartu Asrama Mahasiswa</span>
       </div>
 
       <div className="relative">
@@ -49,7 +49,7 @@ export default function NavbarComponent({ onMenuClick }) {
               className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow"
             />
           ) : (
-            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-600 text-white flex items-center justify-center text-sm font-bold ring-2 ring-white shadow">
+            <span className="w-9 h-9 rounded-full bg-tinta text-kuning flex items-center justify-center text-sm font-bold ring-2 ring-white shadow">
               {getInitial(user?.nama)}
             </span>
           )}
@@ -63,7 +63,7 @@ export default function NavbarComponent({ onMenuClick }) {
         {isOpen && (
           <div
             data-testid="navbar-dropdown"
-            className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 z-10 animate-pop"
+            className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-10 animate-pop"
           >
             <p className="px-4 py-2 text-xs text-slate-600 truncate border-b border-slate-100">
               {getRoleLabel(user?.role)}

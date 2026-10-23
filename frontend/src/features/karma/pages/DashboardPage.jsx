@@ -18,12 +18,16 @@ import BadgeComponent from "../components/BadgeComponent";
 
 function Hero({ title, subtitle }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 p-6 sm:p-8 text-white shadow-xl">
-      <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-kuning/25" />
-      <div className="absolute right-24 -bottom-16 w-40 h-40 rounded-full bg-merah/25" />
-      <div className="relative">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{title}</h1>
-        <p className="text-sm text-white mt-1">{subtitle}</p>
+    <div className="relative overflow-hidden rounded-2xl bg-tinta p-6 sm:p-8 shadow-md">
+      <div className="relative z-10 max-w-md">
+        <h1 className="text-2xl sm:text-3xl text-white">{title}</h1>
+        <p className="text-sm text-slate-300 mt-1.5">{subtitle}</p>
+      </div>
+      <div className="absolute right-6 sm:right-12 top-1/2 -translate-y-1/2" aria-hidden="true">
+        <div className="relative w-24 h-28 sm:w-32 sm:h-32">
+          <div className="kartu-kiri absolute left-0 top-3 w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-kuning shadow-lg" />
+          <div className="kartu-kanan absolute left-8 sm:left-11 top-0 w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-merah shadow-lg" />
+        </div>
       </div>
     </div>
   );
@@ -55,10 +59,10 @@ function PembinaDashboard() {
       <Hero title="Dashboard Bapak Asrama" subtitle="Ringkasan kondisi demerit seluruh mahasiswa." />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCardComponent icon={IconUsers} label="Mahasiswa" value={stats.total} color="from-slate-500 to-slate-700 text-white" />
-        <StatCardComponent icon={IconCards} label="Kuning aktif" value={stats.kuning} color="from-amber-300 to-kuning text-slate-900" />
-        <StatCardComponent icon={IconCards} label="Merah aktif" value={stats.merah} color="from-red-500 to-merah text-white" />
-        <StatCardComponent icon={IconChecklist} label="Sanksos perlu tindakan" value={stats.perluTindakan} color="from-sky-500 to-cyan-600 text-white" />
+        <StatCardComponent icon={IconUsers} label="Mahasiswa" value={stats.total} color="from-slate-700 to-tinta text-white" />
+        <StatCardComponent icon={IconCards} label="Kuning aktif" value={stats.kuning} tepi="kuning" color="from-amber-300 to-kuning text-slate-900" />
+        <StatCardComponent icon={IconCards} label="Merah aktif" value={stats.merah} tepi="merah" color="from-red-500 to-merah text-white" />
+        <StatCardComponent icon={IconChecklist} label="Sanksos perlu tindakan" value={stats.perluTindakan} tepi="biru" color="from-sky-500 to-sky-700 text-white" />
       </div>
 
       <div className="card p-5 flex flex-wrap items-center justify-between gap-3">
@@ -95,9 +99,9 @@ function MahasiswaDashboard() {
 
       {ringkasan && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <StatCardComponent icon={IconAlertTriangle} label="Peringatan berjalan" value={`${ringkasan.peringatan_berjalan} / 3`} color="from-amber-500 to-orange-500 text-white" />
-          <StatCardComponent icon={IconCards} label="Demerit kuning" value={`${ringkasan.kuning_aktif} / 2`} color="from-amber-300 to-kuning text-slate-900" />
-          <StatCardComponent icon={IconCards} label="Demerit merah" value={ringkasan.merah_aktif} color="from-red-500 to-merah text-white" />
+          <StatCardComponent icon={IconAlertTriangle} label="Peringatan berjalan" value={`${ringkasan.peringatan_berjalan} / 3`} color="from-amber-600 to-amber-700 text-white" />
+          <StatCardComponent icon={IconCards} label="Demerit kuning" value={`${ringkasan.kuning_aktif} / 2`} tepi="kuning" color="from-amber-300 to-kuning text-slate-900" />
+          <StatCardComponent icon={IconCards} label="Demerit merah" value={ringkasan.merah_aktif} tepi="merah" color="from-red-500 to-merah text-white" />
         </div>
       )}
 
@@ -125,7 +129,7 @@ function MahasiswaDashboard() {
                   <BadgeComponent value={item.jenis} />
                   <BadgeComponent value={item.status} />
                   {item.poin_sekarang !== undefined && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                    <span className="angka text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
                       Sisa: {item.poin_sekarang} poin
                     </span>
                   )}
