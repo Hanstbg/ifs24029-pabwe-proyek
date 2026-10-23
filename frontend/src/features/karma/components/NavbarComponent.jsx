@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { IconMenu2, IconLogout, IconChevronDown } from "@tabler/icons-react";
+import { IconMenu2, IconLogout, IconChevronDown, IconUserCircle } from "@tabler/icons-react";
 import { asyncLogoutUser } from "../../auth/states/action";
 import { getInitial, getRoleLabel } from "../../../helpers/dataHelper";
 
@@ -69,6 +69,16 @@ export default function NavbarComponent({ onMenuClick }) {
               {getRoleLabel(user?.role)}
               {user?.nim ? ` · ${user.nim}` : ""}
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                navigate("/profil");
+              }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <IconUserCircle size={16} aria-hidden="true" /> Profil Saya
+            </button>
             <button
               type="button"
               onClick={handleLogout}

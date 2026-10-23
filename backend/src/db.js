@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL CHECK (role IN ('pembina','mahasiswa')),
   asrama TEXT,
   kamar TEXT,
-  foto TEXT
+  foto TEXT,
+  bio TEXT
 );
 CREATE TABLE IF NOT EXISTS pelanggaran (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,6 +81,7 @@ function addColumnIfNotExists(table, column, def) {
 addColumnIfNotExists('users', 'asrama', 'TEXT');
 addColumnIfNotExists('users', 'foto', 'TEXT');
 addColumnIfNotExists('users', 'kamar', 'TEXT');
+addColumnIfNotExists('users', 'bio', 'TEXT');
 addColumnIfNotExists('sanksos', 'bukti_selesai', 'TEXT');
 addColumnIfNotExists('pelanggaran', 'poin', 'INTEGER DEFAULT -10');
 addColumnIfNotExists('demerit', 'poin_awal', 'INTEGER DEFAULT -20');

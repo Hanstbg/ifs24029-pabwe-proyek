@@ -5,6 +5,7 @@ import {
   IconUsers,
   IconAlertTriangle,
   IconChecklist,
+  IconUserCircle,
   IconX,
 } from "@tabler/icons-react";
 
@@ -14,11 +15,13 @@ const MENU = {
     { to: "/mahasiswa", label: "Mahasiswa", icon: IconUsers },
     { to: "/pelanggaran", label: "Pelanggaran", icon: IconAlertTriangle },
     { to: "/sanksos", label: "Sanksos", icon: IconChecklist },
+    { to: "/profil", label: "Profil", icon: IconUserCircle },
   ],
   mahasiswa: [
     { to: "/", label: "Dashboard", icon: IconLayoutDashboard, end: true },
     { to: "/pelanggaran", label: "Riwayat Pelanggaran", icon: IconAlertTriangle },
     { to: "/sanksos", label: "Sanksos Saya", icon: IconChecklist },
+    { to: "/profil", label: "Profil", icon: IconUserCircle },
   ],
 };
 

@@ -1,6 +1,6 @@
 import authApi from "../api/authApi";
 import { putAccessToken, removeAccessToken } from "../../../helpers/apiHelper";
-import { showErrorDialog } from "../../../helpers/toolsHelper";
+import { showErrorDialog, showSuccessDialog } from "../../../helpers/toolsHelper";
 import { loginStart, loginSuccess, loginFailure, setUser, clearUser } from "./reducer";
 
 export function asyncFetchMe() {
@@ -44,6 +44,20 @@ export function asyncRegisterUser({ nama, nim, password, asrama, kamar, foto }) 
       return true;
     } catch (error) {
       dispatch(loginFailure());
+      await showErrorDialog(error.message);
+      return false;
+    }
+  };
+}
+
+export function asyncUpdateProfil(data) {
+  return async (dispatch) => {
+    try {
+      const result = await authApi.updateProfil(data);
+      dispatch(setUser(result.user));
+      await showSuccessDialog("Profil berhasil diperbarui.");
+      return true;
+    } catch (error) {
       await showErrorDialog(error.message);
       return false;
     }

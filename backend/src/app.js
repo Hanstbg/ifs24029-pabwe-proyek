@@ -6,6 +6,8 @@ const { buatToken, wajibLogin, wajibRole } = require('./auth');
 const { catatPelanggaran, ringkasan } = require('./logic');
 const { DAFTAR_ASRAMA } = require('./constants');
 
+const normKamar = (k) => String(k || '').trim().toUpperCase();
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -20,14 +22,15 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ error: 'NIM atau password salah' });
   res.json({
     token: buatToken(u),
-    user: { id: u.id, nama: u.nama, nim: u.nim, role: u.role, asrama: u.asrama, foto: u.foto },
+    user: { id: u.id, nama: u.nama, nim: u.nim, role: u.role, asrama: u.asrama, kamar: u.kamar, foto: u.foto, bio: u.bio },
   });
 });
 
 app.post('/api/auth/register', (req, res) => {
   const { nama, nim, password, asrama, foto } = req.body || {};
-  if (!nama || !nim || !password || !asrama) {
-    return res.status(400).json({ error: 'Nama, NIM, kata sandi, dan asrama wajib diisi' });
+  const kamar = normKamar(req.body?.kamar);
+  if (!nama || !nim || !password || !asrama || !kamar) {
+    return res.status(400).json({ error: 'Nama, NIM, kata sandi, asrama, dan kamar wajib diisi' });
   }
   if (!DAFTAR_ASRAMA.includes(asrama)) {
     return res.status(400).json({ error: 'Asrama tidak valid. Pilih dari 7 asrama resmi.' });
@@ -35,9 +38,9 @@ app.post('/api/auth/register', (req, res) => {
   try {
     const hashed = bcrypt.hashSync(password, 10);
     const r = db.prepare(
-      `INSERT INTO users (nama, nim, password, role, asrama, foto) VALUES (?,?,?, 'mahasiswa', ?, ?)`
-    ).run(nama, nim, hashed, asrama, foto || null);
-    const newUser = { id: r.lastInsertRowid, nama, nim, role: 'mahasiswa', asrama, foto: foto || null };
+      `INSERT INTO users (nama, nim, password, role, asrama, kamar, foto) VALUES (?,?,?, 'mahasiswa', ?, ?, ?)`
+    ).run(nama, nim, hashed, asrama, kamar, foto || null);
+    const newUser = { id: r.lastInsertRowid, nama, nim, role: 'mahasiswa', asrama, kamar, foto: foto || null, bio: null };
     res.status(201).json({ token: buatToken(newUser), user: newUser });
   } catch {
     res.status(409).json({ error: 'NIM sudah terdaftar' });
@@ -45,32 +48,72 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 app.get('/api/auth/me', wajibLogin, (req, res) => {
-  const u = db.prepare(`SELECT id, nama, nim, role, asrama, foto FROM users WHERE id = ?`).get(req.user.id);
+  const u = db.prepare(`SELECT id, nama, nim, role, asrama, kamar, foto, bio FROM users WHERE id = ?`).get(req.user.id);
   if (!u) return res.status(401).json({ error: 'Akun tidak ditemukan' });
   res.json({ user: u });
 });
 
+// ---- Profil (semua peran): ubah nama, bio, foto; mahasiswa juga boleh pindah asrama / kamar
+app.put('/api/profil', wajibLogin, (req, res) => {
+  const u = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.user.id);
+  if (!u) return res.status(401).json({ error: 'Akun tidak ditemukan' });
+  const body = req.body || {};
+
+  const nama = body.nama !== undefined ? String(body.nama).trim() : u.nama;
+  if (!nama) return res.status(400).json({ error: 'Nama tidak boleh kosong' });
+  const bio = body.bio !== undefined ? (String(body.bio).trim().slice(0, 300) || null) : u.bio;
+  const foto = 'foto' in body ? (body.foto || null) : u.foto;
+
+  let asrama = u.asrama;
+  let kamar = u.kamar;
+  if (u.role === 'mahasiswa') {
+    if (body.asrama !== undefined) {
+      if (!DAFTAR_ASRAMA.includes(body.asrama))
+        return res.status(400).json({ error: 'Asrama tidak valid. Pilih dari 7 asrama resmi.' });
+      asrama = body.asrama;
+    }
+    if (body.kamar !== undefined) {
+      kamar = normKamar(body.kamar);
+      if (!kamar) return res.status(400).json({ error: 'Nomor kamar wajib diisi' });
+    }
+  }
+
+  db.prepare(`UPDATE users SET nama = ?, bio = ?, foto = ?, asrama = ?, kamar = ? WHERE id = ?`)
+    .run(nama, bio, foto, asrama, kamar, u.id);
+  res.json({ user: { id: u.id, nama, nim: u.nim, role: u.role, asrama, kamar, foto, bio } });
+});
+
 // ---- Mahasiswa (pembina)
 app.get('/api/mahasiswa', wajibLogin, wajibRole('pembina'), (req, res) => {
-  const rows = db.prepare(`SELECT id, nama, nim, asrama, foto FROM users WHERE role='mahasiswa' ORDER BY nama`).all();
+  const rows = db.prepare(`SELECT id, nama, nim, asrama, kamar, foto FROM users WHERE role='mahasiswa' ORDER BY nama`).all();
   res.json(rows.map(r => ({ ...r, ...ringkasan(r.id) })));
 });
 app.post('/api/mahasiswa', wajibLogin, wajibRole('pembina'), (req, res) => {
   const { nama, nim, password, asrama, foto } = req.body || {};
+  const kamar = normKamar(req.body?.kamar) || null;
   if (!nama || !nim || !password) return res.status(400).json({ error: 'nama, nim, password wajib diisi' });
   try {
-    const r = db.prepare(`INSERT INTO users (nama, nim, password, role, asrama, foto) VALUES (?,?,?, 'mahasiswa', ?, ?)`)
-      .run(nama, nim, bcrypt.hashSync(password, 10), asrama || null, foto || null);
-    res.status(201).json({ id: r.lastInsertRowid, nama, nim, asrama: asrama || null, foto: foto || null });
+    const r = db.prepare(`INSERT INTO users (nama, nim, password, role, asrama, kamar, foto) VALUES (?,?,?, 'mahasiswa', ?, ?, ?)`)
+      .run(nama, nim, bcrypt.hashSync(password, 10), asrama || null, kamar, foto || null);
+    res.status(201).json({ id: r.lastInsertRowid, nama, nim, asrama: asrama || null, kamar, foto: foto || null });
   } catch {
     res.status(409).json({ error: 'NIM sudah terdaftar' });
   }
 });
 
+// Ubah kamar mahasiswa (untuk data lama yang belum punya kamar)
+app.patch('/api/mahasiswa/:id', wajibLogin, wajibRole('pembina'), (req, res) => {
+  const kamar = normKamar(req.body?.kamar);
+  const r = db.prepare(`UPDATE users SET kamar = ? WHERE id = ? AND role = 'mahasiswa'`)
+    .run(kamar || null, req.params.id);
+  if (!r.changes) return res.status(404).json({ error: 'Mahasiswa tidak ditemukan' });
+  res.json({ id: Number(req.params.id), kamar: kamar || null });
+});
+
 // ---- Asrama (pembina)
 app.get('/api/asrama', wajibLogin, wajibRole('pembina'), (req, res) => {
   const rows = db.prepare(
-    `SELECT id, nama, nim, asrama, foto FROM users WHERE role='mahasiswa' ORDER BY nama`
+    `SELECT id, nama, nim, asrama, kamar, foto FROM users WHERE role='mahasiswa' ORDER BY nama`
   ).all().map(r => ({ ...r, ...ringkasan(r.id) }));
 
   res.json(DAFTAR_ASRAMA.map(nama => {
@@ -81,9 +124,31 @@ app.get('/api/asrama', wajibLogin, wajibRole('pembina'), (req, res) => {
 
 // ---- Pelanggaran
 app.post('/api/pelanggaran', wajibLogin, wajibRole('pembina'), (req, res) => {
-  const { user_id, deskripsi, jenis, poin } = req.body || {};
-  if (!user_id || !deskripsi || !['peringatan', 'kuning', 'fatal'].includes(jenis))
-    return res.status(400).json({ error: 'user_id, deskripsi, jenis (peringatan/kuning/fatal) wajib diisi' });
+  const { user_id, deskripsi, jenis, poin, asrama } = req.body || {};
+  const kamar = normKamar(req.body?.kamar);
+  if (!deskripsi || !['peringatan', 'kuning', 'fatal'].includes(jenis))
+    return res.status(400).json({ error: 'deskripsi dan jenis (peringatan/kuning/fatal) wajib diisi' });
+
+  // Mode satu kamar: pelanggaran dicatat untuk SEMUA penghuni kamar tersebut
+  if (kamar) {
+    const penghuni = asrama
+      ? db.prepare(`SELECT id, nama FROM users WHERE role='mahasiswa' AND kamar = ? AND asrama = ?`).all(kamar, asrama)
+      : db.prepare(`SELECT id, nama FROM users WHERE role='mahasiswa' AND kamar = ?`).all(kamar);
+    if (!penghuni.length) return res.status(404).json({ error: 'Tidak ada penghuni di kamar tersebut' });
+    const hasil = penghuni.map((m) => ({
+      user_id: m.id,
+      nama: m.nama,
+      ...catatPelanggaran({ userId: m.id, deskripsi, jenis, pembinaId: req.user.id, poin }),
+    }));
+    return res.status(201).json({
+      kamar,
+      jumlah: hasil.length,
+      hasil,
+      demeritBaru: hasil.flatMap((h) => h.demeritBaru),
+    });
+  }
+
+  if (!user_id) return res.status(400).json({ error: 'user_id atau kamar wajib diisi' });
   const m = db.prepare(`SELECT id FROM users WHERE id = ? AND role='mahasiswa'`).get(user_id);
   if (!m) return res.status(404).json({ error: 'Mahasiswa tidak ditemukan' });
   res.status(201).json(catatPelanggaran({ userId: user_id, deskripsi, jenis, pembinaId: req.user.id, poin }));
@@ -133,7 +198,7 @@ app.post('/api/sanksos', wajibLogin, wajibRole('mahasiswa'), (req, res) => {
 app.patch('/api/sanksos/:id', wajibLogin, (req, res) => {
   const s = db.prepare(`SELECT * FROM sanksos WHERE id = ?`).get(req.params.id);
   if (!s) return res.status(404).json({ error: 'Sanksos tidak ditemukan' });
-  const { aksi, tugas, poin, bukti_foto } = req.body || {};
+  const { aksi, tugas, poin, bukti_selesai } = req.body || {};
   const set = (status, extra = {}) => {
     db.prepare(`UPDATE sanksos SET status = ?, tugas = COALESCE(?, tugas), bukti_foto = COALESCE(?, bukti_foto) WHERE id = ?`)
       .run(status, extra.tugas ?? null, extra.bukti_foto ?? null, s.id);
@@ -173,7 +238,10 @@ app.patch('/api/sanksos/:id', wajibLogin, (req, res) => {
     }
   } else if (aksi === 'dikerjakan' && s.user_id === req.user.id) {
     if (s.status !== 'disetujui') return salah('Tugas belum disetujui');
-    return set('dikerjakan', { bukti_foto });
+    // Bukti pengerjaan disimpan di kolom terpisah agar lampiran awal tidak tertimpa
+    db.prepare(`UPDATE sanksos SET status = 'dikerjakan', bukti_selesai = ? WHERE id = ?`)
+      .run(bukti_selesai || null, s.id);
+    return res.json({ id: s.id, status: 'dikerjakan' });
   }
   res.status(400).json({ error: 'Aksi tidak valid' });
 });

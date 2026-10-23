@@ -11,6 +11,7 @@ const MahasiswaPage = lazy(() => import("./features/mahasiswa/pages/MahasiswaPag
 const AsramaPage = lazy(() => import("./features/asrama/pages/AsramaPage"));
 const PelanggaranPage = lazy(() => import("./features/pelanggaran/pages/PelanggaranPage"));
 const SanksosPage = lazy(() => import("./features/sanksos/pages/SanksosPage"));
+const ProfilPage = lazy(() => import("./features/profil/pages/ProfilPage"));
 
 function PageFallback() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
           />
           <Route path="pelanggaran" element={<PelanggaranPage />} />
           <Route path="sanksos" element={<SanksosPage />} />
+          <Route path="profil" element={<ProfilPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
