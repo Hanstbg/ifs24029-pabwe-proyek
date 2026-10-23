@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toArray } from "../../../helpers/dataHelper";
 import { formatDate } from "../../../helpers/toolsHelper";
@@ -21,9 +21,29 @@ function CatatForm() {
     dispatch(asyncFetchMahasiswa());
   }, [dispatch]);
 
+  // Kelompokkan mahasiswa per kamar (asrama + nomor kamar)
+  const daftarKamar = useMemo(() => {
+    const map = new Map();
+    mahasiswa.forEach((m) => {
+      if (!m.kamar) return;
+      const key = `${m.asrama || ""}|${m.kamar}`;
+      if (!map.has(key)) map.set(key, { key, asrama: m.asrama, kamar: m.kamar, anggota: [] });
+      map.get(key).anggota.push(m);
+    });
+    return [...map.values()].sort((a, b) =>
+      `${a.asrama}${a.kamar}`.localeCompare(`${b.asrama}${b.kamar}`, "id", { numeric: true })
+    );
+  }, [mahasiswa]);
+
+  const kamarTerpilih = userId.startsWith("kamar:")
+    ? daftarKamar.find((k) => `kamar:${k.key}` === userId)
+    : null;
+
   async function handleSubmit(event) {
     event.preventDefault();
-    const payload = { user_id: userId, jenis, deskripsi };
+    const payload = kamarTerpilih
+      ? { asrama: kamarTerpilih.asrama, kamar: kamarTerpilih.kamar, jenis, deskripsi }
+      : { user_id: userId, jenis, deskripsi };
     if (poin) payload.poin = Number(poin);
     const success = await dispatch(asyncAddPelanggaran(payload));
     if (success) {
@@ -49,13 +69,29 @@ function CatatForm() {
             onChange={onUserIdChange}
             className="input-base"
           >
-            <option value="">-- Pilih mahasiswa --</option>
-            {mahasiswa.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.nama} ({item.nim})
-              </option>
-            ))}
+            <option value="">-- Pilih mahasiswa / kamar --</option>
+            {daftarKamar.length > 0 && (
+              <optgroup label="Satu kamar (semua penghuni kena)">
+                {daftarKamar.map((k) => (
+                  <option key={k.key} value={`kamar:${k.key}`}>
+                    Kamar {k.kamar} - {k.asrama} ({k.anggota.length} orang)
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            <optgroup label="Per mahasiswa">
+              {mahasiswa.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.nama} ({item.nim}){item.kamar ? ` - Kamar ${item.kamar}` : ""}
+                </option>
+              ))}
+            </optgroup>
           </select>
+          {kamarTerpilih && (
+            <p className="text-xs text-slate-600 mt-1.5">
+              Akan dicatat untuk: {kamarTerpilih.anggota.map((a) => a.nama).join(", ")}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="pelanggaran-jenis-select" className="block text-sm font-semibold text-slate-700 mb-1.5">

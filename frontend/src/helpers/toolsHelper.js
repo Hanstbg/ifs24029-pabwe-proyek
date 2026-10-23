@@ -41,6 +41,18 @@ export async function showConfirmDialog(message) {
   return result.isConfirmed;
 }
 
+export async function showImageDialog(src, title = "") {
+  const Swal = await loadSwal();
+  return Swal.fire({
+    title,
+    imageUrl: src,
+    imageAlt: title || "Foto",
+    width: "auto",
+    showConfirmButton: false,
+    showCloseButton: true,
+  });
+}
+
 /** Dialog isian teks. Mengembalikan teks (boleh kosong) atau null bila dibatalkan. */
 export async function showPromptDialog(title, placeholder = "") {
   const Swal = await loadSwal();

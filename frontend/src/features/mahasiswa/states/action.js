@@ -23,17 +23,30 @@ export function asyncFetchMahasiswa() {
   };
 }
 
-export function asyncAddMahasiswa({ nama, nim, password, asrama, foto }) {
+export function asyncAddMahasiswa({ nama, nim, password, asrama, kamar, foto }) {
   return async (dispatch) => {
     dispatch(addMahasiswaStart());
     try {
-      await mahasiswaApi.addMahasiswa({ nama, nim, password, asrama, foto });
+      await mahasiswaApi.addMahasiswa({ nama, nim, password, asrama, kamar, foto });
       dispatch(addMahasiswaSuccess());
       await showSuccessDialog("Mahasiswa berhasil ditambahkan.");
       await dispatch(asyncFetchMahasiswa());
       return true;
     } catch (error) {
       dispatch(addMahasiswaFailure());
+      await showErrorDialog(error.message);
+      return false;
+    }
+  };
+}
+
+export function asyncUpdateKamar(id, kamar) {
+  return async (dispatch) => {
+    try {
+      await mahasiswaApi.updateKamar(id, kamar);
+      await dispatch(asyncFetchMahasiswa());
+      return true;
+    } catch (error) {
       await showErrorDialog(error.message);
       return false;
     }

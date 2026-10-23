@@ -24,24 +24,35 @@ export function asyncFetchPelanggaran() {
   };
 }
 
-export function asyncAddPelanggaran({ user_id, jenis, deskripsi, poin }) {
+export function asyncAddPelanggaran({ user_id, asrama, kamar, jenis, deskripsi, poin }) {
   return async (dispatch) => {
     dispatch(addPelanggaranStart());
     try {
-      const result = await pelanggaranApi.addPelanggaran({
-        user_id: Number(user_id),
-        jenis,
-        deskripsi,
-        poin: poin ? Number(poin) : undefined,
-      });
+      const payload = { jenis, deskripsi, poin: poin ? Number(poin) : undefined };
+      if (kamar) {
+        payload.asrama = asrama;
+        payload.kamar = kamar;
+      } else {
+        payload.user_id = Number(user_id);
+      }
+      const result = await pelanggaranApi.addPelanggaran(payload);
       dispatch(addPelanggaranSuccess());
 
-      const baru = toArray(result?.demeritBaru)
-        .map((item) => `demerit ${String(item.jenis).toUpperCase()}`)
-        .join(" + ");
-      await showSuccessDialog(
-        baru ? `Pelanggaran tercatat. Otomatis terbit: ${baru}.` : "Peringatan tercatat."
-      );
+      let pesan;
+      if (kamar) {
+        const perOrang = toArray(result?.hasil)
+          .filter((h) => toArray(h.demeritBaru).length > 0)
+          .map((h) => `${h.nama}: ${toArray(h.demeritBaru).map((d) => String(d.jenis).toUpperCase()).join(" + ")}`)
+          .join("; ");
+        pesan = `Pencatatan untuk kamar ${kamar} berhasil (${result?.jumlah ?? 0} penghuni).`;
+        if (perOrang) pesan += ` Demerit otomatis terbit -> ${perOrang}.`;
+      } else {
+        const baru = toArray(result?.demeritBaru)
+          .map((item) => `demerit ${String(item.jenis).toUpperCase()}`)
+          .join(" + ");
+        pesan = baru ? `Pelanggaran tercatat. Otomatis terbit: ${baru}.` : "Peringatan tercatat.";
+      }
+      await showSuccessDialog(pesan);
 
       await dispatch(asyncFetchPelanggaran());
       await dispatch(asyncFetchMahasiswa());

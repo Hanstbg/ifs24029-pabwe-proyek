@@ -75,7 +75,7 @@ export function asyncAksiSanksos(id, aksi, extra) {
       const payload = { aksi };
       if (aksi === "setujui") payload.tugas = extra;
       if (aksi === "selesai" && extra !== undefined && extra !== "") payload.poin = Number(extra);
-      if (aksi === "dikerjakan" && extra) payload.bukti_foto = extra;
+      if (aksi === "dikerjakan" && extra) payload.bukti_selesai = extra;
 
       await sanksosApi.aksiSanksos(id, payload);
       dispatch(submitSanksosSuccess());

@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [nim, onNimChange] = useInput("");
   const [password, onPasswordChange] = useInput("");
   const [asrama, onAsramaChange] = useInput(DAFTAR_ASRAMA[0]);
+  const [kamar, onKamarChange] = useInput("");
   const [foto, setFoto] = useState("");
 
   function handleFotoChange(event) {
@@ -29,7 +30,7 @@ export default function RegisterPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     const success = await dispatch(
-      asyncRegisterUser({ nama, nim, password, asrama, foto })
+      asyncRegisterUser({ nama, nim, password, asrama, kamar, foto })
     );
     if (success) navigate("/", { replace: true });
   }
@@ -105,6 +106,21 @@ export default function RegisterPage() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="register-kamar-input" className="block text-sm font-semibold text-slate-700 mb-1.5">
+            Nomor Kamar
+          </label>
+          <input
+            id="register-kamar-input"
+            type="text"
+            required
+            value={kamar}
+            onChange={onKamarChange}
+            className="input-base"
+            placeholder="mis. 101"
+          />
         </div>
 
         <div>

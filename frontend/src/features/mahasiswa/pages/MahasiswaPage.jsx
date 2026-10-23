@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toArray, DAFTAR_ASRAMA, getInitial } from "../../../helpers/dataHelper";
 import useInput from "../../../hooks/useInput";
-import { asyncFetchMahasiswa, asyncAddMahasiswa } from "../states/action";
+import { asyncFetchMahasiswa, asyncAddMahasiswa, asyncUpdateKamar } from "../states/action";
 
 export default function MahasiswaPage() {
   const dispatch = useDispatch();
@@ -15,6 +15,7 @@ export default function MahasiswaPage() {
   const [nim, onNimChange, , resetNim] = useInput("");
   const [password, onPasswordChange, , resetPassword] = useInput("");
   const [asrama, onAsramaChange, , resetAsrama] = useInput(DAFTAR_ASRAMA[0]);
+  const [kamar, onKamarChange, , resetKamar] = useInput("");
   const [foto, setFoto] = useState("");
 
   useEffect(() => {
@@ -33,12 +34,13 @@ export default function MahasiswaPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const success = await dispatch(asyncAddMahasiswa({ nama, nim, password, asrama, foto }));
+    const success = await dispatch(asyncAddMahasiswa({ nama, nim, password, asrama, kamar, foto }));
     if (success) {
       resetNama();
       resetNim();
       resetPassword();
       resetAsrama();
+      resetKamar();
       setFoto("");
     }
   }
@@ -90,6 +92,7 @@ export default function MahasiswaPage() {
                 <th className="py-2 pr-3 font-semibold">Mahasiswa</th>
                 <th className="py-2 pr-3 font-semibold">NIM</th>
                 <th className="py-2 pr-3 font-semibold">Asrama</th>
+                <th className="py-2 pr-3 font-semibold">Kamar</th>
                 <th className="py-2 pr-3 font-semibold">Peringatan</th>
                 <th className="py-2 pr-3 font-semibold">Kuning</th>
                 <th className="py-2 pr-3 font-semibold">Merah</th>
@@ -121,6 +124,19 @@ export default function MahasiswaPage() {
                       {item.asrama || "Belum ditentukan"}
                     </span>
                   </td>
+                  <td className="py-2.5 pr-3">
+                    <input
+                      aria-label={`Kamar ${item.nama}`}
+                      defaultValue={item.kamar ?? ""}
+                      placeholder="-"
+                      onBlur={(e) => {
+                        if (e.target.value.trim() !== (item.kamar ?? "")) {
+                          dispatch(asyncUpdateKamar(item.id, e.target.value));
+                        }
+                      }}
+                      className="input-base w-20 py-1 px-2 text-sm"
+                    />
+                  </td>
                   <td className="py-2.5 pr-3">{item.peringatan_berjalan} / 3</td>
                   <td className="py-2.5 pr-3">{item.kuning_aktif} / 2</td>
                   <td className="py-2.5 pr-3">{item.merah_aktif}</td>
@@ -131,7 +147,7 @@ export default function MahasiswaPage() {
               ))}
               {!isLoading && filteredMahasiswa.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="py-6 text-center text-slate-600">
+                  <td colSpan="8" className="py-6 text-center text-slate-600">
                     {filterAsrama ? `Belum ada mahasiswa di ${filterAsrama}` : "Belum ada mahasiswa"}
                   </td>
                 </tr>
@@ -143,7 +159,7 @@ export default function MahasiswaPage() {
 
       <form onSubmit={handleSubmit} className="card p-4 sm:p-5 space-y-4" data-testid="mahasiswa-form">
         <h2 className="text-lg font-extrabold text-slate-900">Tambah Mahasiswa</h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <label htmlFor="mahasiswa-nama-input" className="block text-sm font-semibold text-slate-700 mb-1.5">
               Nama
@@ -184,6 +200,12 @@ export default function MahasiswaPage() {
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label htmlFor="mahasiswa-kamar-input" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              Kamar
+            </label>
+            <input id="mahasiswa-kamar-input" value={kamar} onChange={onKamarChange} className="input-base" placeholder="mis. 101" />
           </div>
         </div>
 

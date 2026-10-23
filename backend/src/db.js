@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
   password TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('pembina','mahasiswa')),
   asrama TEXT,
+  kamar TEXT,
   foto TEXT
 );
 CREATE TABLE IF NOT EXISTS pelanggaran (
@@ -59,7 +60,8 @@ CREATE TABLE IF NOT EXISTS sanksos (
   tugas TEXT,
   tanggal TEXT NOT NULL DEFAULT (datetime('now')),
   poin_diberikan INTEGER DEFAULT 0,
-  bukti_foto TEXT
+  bukti_foto TEXT,
+  bukti_selesai TEXT
 );
 `);
 
@@ -77,6 +79,8 @@ function addColumnIfNotExists(table, column, def) {
 
 addColumnIfNotExists('users', 'asrama', 'TEXT');
 addColumnIfNotExists('users', 'foto', 'TEXT');
+addColumnIfNotExists('users', 'kamar', 'TEXT');
+addColumnIfNotExists('sanksos', 'bukti_selesai', 'TEXT');
 addColumnIfNotExists('pelanggaran', 'poin', 'INTEGER DEFAULT -10');
 addColumnIfNotExists('demerit', 'poin_awal', 'INTEGER DEFAULT -20');
 addColumnIfNotExists('demerit', 'poin_sekarang', 'INTEGER DEFAULT -20');

@@ -33,11 +33,11 @@ export function asyncLoginUser({ nim, password }) {
   };
 }
 
-export function asyncRegisterUser({ nama, nim, password, asrama, foto }) {
+export function asyncRegisterUser({ nama, nim, password, asrama, kamar, foto }) {
   return async (dispatch) => {
     dispatch(loginStart());
     try {
-      const result = await authApi.register({ nama, nim, password, asrama, foto });
+      const result = await authApi.register({ nama, nim, password, asrama, kamar, foto });
       putAccessToken(result.token);
       dispatch(setUser(result.user));
       dispatch(loginSuccess());
